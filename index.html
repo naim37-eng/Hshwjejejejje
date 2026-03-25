@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Auth System</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #e9ecef; margin: 0; }
+        .box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #218838; }
+        .hidden { display: none; }
+        .toggle-link { color: #007bff; cursor: pointer; margin-top: 15px; display: block; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-container" class="box">
+        <h2 id="form-title">লগইন করুন</h2>
+        <input type="email" id="email" placeholder="আপনার ইমেইল">
+        <input type="password" id="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)">
+        
+        <button id="main-btn" onclick="handleAuth()">লগইন</button>
+        
+        <span class="toggle-link" id="toggle-text" onclick="toggleForm()">অ্যাকাউন্ট নেই? সাইন-আপ করুন</span>
+    </div>
+
+    <div id="dashboard" class="box hidden">
+        <h2>স্বাগতম! 🎉</h2>
+        <p>আপনি সফলভাবে লগইন করেছেন।</p>
+        <p>আপনার ইমেইল: <b id="user-email"></b></p>
+        <button style="background-color: #dc3545;" onclick="logout()">লগআউট করুন</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // ১. আপনার Firebase কনসোল থেকে পাওয়া তথ্য এখানে বসান
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Firebase শুরু করা
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+
+        let isLoginView = true;
+
+        // ফর্ম পরিবর্তন (Login <=> Signup)
+        window.toggleForm = () => {
+            isLoginView = !isLoginView;
+            document.getElementById('form-title').innerText = isLoginView ? "লগইন করুন" : "সাইন-আপ করুন";
+            document.getElementById('main-btn').innerText = isLoginView ? "লগইন" : "রেজিস্ট্রেশন করুন";
+            document.getElementById('toggle-text').innerText = isLoginView ? "অ্যাকাউন্ট নেই? সাইন-আপ করুন" : "অ্যাকাউন্ট আছে? লগইন করুন";
+        };
+
+        // সাইন-আপ ও লগইন হ্যান্ডলার
+        window.handleAuth = () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+
+            if (isLoginView) {
+                // লগইন লজিক
+                signInWithEmailAndPassword(auth, email, pass)
+                    .catch(err => alert("লগইন ব্যর্থ: " + err.message));
+            } else {
+                // সাইন-আপ লজিক
+                createUserWithEmailAndPassword(auth, email, pass)
+                    .then(() => alert("সাইন-আপ সফল! ডাটাবেসে ডেটা জমা হয়েছে।"))
+                    .catch(err => alert("সাইন-আপ ব্যর্থ: " + err.message));
+            }
+        };
+
+        // সেশন চেক (লগআউট না করা পর্যন্ত সরাসরি ড্যাশবোর্ডে রাখবে)
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                document.getElementById('user-email').innerText = user.email;
+            } else {
+                document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('dashboard').classList.add('hidden');
+            }
+        });
+
+        // লগআউট ফাংশন
+        window.logout = () => {
+            signOut(auth);
+        };
+    </script>
+</body>
+  </html>
+  
